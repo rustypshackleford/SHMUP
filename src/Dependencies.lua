@@ -17,6 +17,7 @@ gTextures = {
     ['green-hit'] = love.graphics.newImage('graphics/laserGreenShot.png'),
     ['laser-red'] = love.graphics.newImage('graphics/laserRed.png'),
     ['red-hit'] = love.graphics.newImage('graphics/laserRedShot.png'),
+    ['life'] = love.graphics.newImage('graphics/life.png'),
     ['meteor-big'] = love.graphics.newImage('graphics/meteorBig.png'),
     ['meteor-small'] = love.graphics.newImage('graphics/meteorSmall.png'),
     ['player'] = love.graphics.newImage('graphics/player.png'),
