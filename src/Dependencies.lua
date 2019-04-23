@@ -7,6 +7,16 @@ Event = require 'lib/knife.event'
 push = require 'lib/push'
 Timer = require 'lib/knife.timer'
 
+require 'src/StateMachine'
+require 'src/Util'
+require 'src/constants'
+require 'src/Player'
+
+require 'src/states/BaseState'
+require 'src/states/StartState'
+require 'src/states/PlayState'
+require 'src/states/GameOverState'
+
 gTextures = {
     ['background'] = love.graphics.newImage('graphics/Background/starBackground.png'),
     ['speed-line'] = love.graphics.newImage('graphics/Background/speedLine.png'),
@@ -29,12 +39,13 @@ gTextures = {
 }
 
 gFrames = {
-    ['explosion'] = GenerateQuads(gTextures['explosion'], 32, 32)
+    ['explosion'] = GenerateQuads(gTextures['explosion'], 32, 32),
+    ['background'] = GenerateQuads(gTextures['background'], 256, 256)
 }
 
 gFonts = {
-    ['f-thin'] = love.graphics.newFont('fonts/future_thin', 16),
-    ['future'] = love.graphics.newFont('fonts/future', 32)
+    ['f-thin'] = love.graphics.newFont('fonts/future_thin.ttf', 16),
+    ['future'] = love.graphics.newFont('fonts/future.ttf', 32)
 }
 
 gSounds = {
@@ -43,7 +54,7 @@ gSounds = {
     ['laser1'] = love.audio.newSource('sounds/sfx_laser1.wav'),
     ['laser2'] = love.audio.newSource('sounds/sfx_laser2.wav'),
     ['lose-game'] = love.audio.newSource('sounds/sfx_lose.wav'),
-    ['shld-down'] = love.audio.newSource('sounds/sfx_sheildDown.wav'),
+    ['shld-down'] = love.audio.newSource('sounds/sfx_shieldDown.wav'),
     ['shld-up'] = love.audio.newSource('sounds/sfx_shieldUp.wav'),
     ['score'] = love.audio.newSource('sounds/sfx_twoTone.wav'),
     ['zap'] = love.audio.newSource('sounds/sfx_zap.wav'),
