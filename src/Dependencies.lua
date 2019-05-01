@@ -11,6 +11,11 @@ require 'src/StateMachine'
 require 'src/Util'
 require 'src/constants'
 require 'src/Player'
+require 'src/PlayerProjectile'
+require 'src/BigAsteroid'
+require 'src/SmallAsteroid'
+require 'src/EnemyShip'
+require 'src/EnemyUFO'
 
 require 'src/states/BaseState'
 require 'src/states/StartState'
@@ -35,12 +40,6 @@ gTextures = {
     ['player-left'] = love.graphics.newImage('graphics/playerLeft.png'),
     ['player-right'] = love.graphics.newImage('graphics/playerRight.png'),
     ['shield'] = love.graphics.newImage('graphics/shield.png'),
-    ['explosion'] = love.graphics.newImage('graphics/exp2_0.png')
-}
-
-gFrames = {
-    ['explosion'] = GenerateQuads(gTextures['explosion'], 32, 32),
-    ['background'] = GenerateQuads(gTextures['background'], 256, 256)
 }
 
 gFonts = {
@@ -51,6 +50,7 @@ gFonts = {
 gSounds = {
     ['title-theme'] = love.audio.newSource('sounds/Space-Heroes.wav'),
     ['game-music'] = love.audio.newSource('sounds/Without-Fear.wav'),
+    ['game-over'] = love.audio.newSource('sounds/Defeated (Game Over Tune).wav'),
     ['laser1'] = love.audio.newSource('sounds/sfx_laser1.wav'),
     ['laser2'] = love.audio.newSource('sounds/sfx_laser2.wav'),
     ['lose-game'] = love.audio.newSource('sounds/sfx_lose.wav'),

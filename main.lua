@@ -13,7 +13,7 @@ function love.load()
     if arg[#arg] == "-debug" then require("mobdebug").start() end
     
     math.randomseed(os.time())
-    love.window.setTitle('Legend of Zelda')
+    love.window.setTitle('SHMUP')
     love.graphics.setDefaultFilter('nearest', 'nearest')
 
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
@@ -30,9 +30,6 @@ function love.load()
         ['game-over'] = function() return GameOverState() end
     }
     gStateMachine:change('start')
-
-    gSounds['title-theme']:setLooping(true)
-    gSounds['title-theme']:play()
 
     love.keyboard.keysPressed = {}
 end
