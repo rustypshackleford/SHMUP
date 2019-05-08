@@ -8,44 +8,62 @@
 
 EnemyUFO = Class{}
 
-function EnemyUFO:init()
+function EnemyUFO:init(num)
     -- random starting position along the top
     self.x = math.random(0, VIRTUAL_WIDTH)
     -- spawns outside the screen bounds
     self.y = -50
     
+    self.ID = num
+    
     -- # of points to give
     self.points = 400
     -- how many hits it takes to destroy
-    self.health = 4
+    self.health = 2
     
     -- rate of travel
-    self.xTraj = math.random(3)
-    self.yTraj = math.random(3)
+    self.xTraj = math.random(2)
+    self.yTraj = math.random(2)
     
     -- makes sure the ship is always traveling in 
     -- toward the center and never out toward the edge
-    if self.x < VIRTUAL_WIDTH / 2 then
-        self.xDir = 2
-    else
-        self.xDir = 1
+    if self.straight == 2 then
+        if self.x < VIRTUAL_WIDTH / 2 then
+            self.xDir = 2
+        else
+            self.xDir = 1
+        end
+    else    -- or traveling straight
+        self.xDir = 0
     end
+    
+    self.shooting = false
+    
+    -- the interval for shooting is every 1.25 seconds, in 3 shot bursts spaced 0.1 second apart
+    Timer.every(1.25, function() self.shooting = not self.shooting end)
+    Timer.after(0.1, function() Timer.every(1.25, function() self.shooting = not self.shooting end) end)
+    Timer.after(0.2, function() Timer.every(1.25, function() self.shooting = not self.shooting end) end)
     
     -- get width and height at 25% scale due to sprite size
     self.width = gTextures['enemy-ufo']:getWidth() / 4
     self.height = gTextures['enemy-ufo']:getHeight() / 4
 end
 
-function EnemyUFO:update()
-    -- update x either left or right
+function EnemyUFO:update(dt)
+    -- update x either to the left or right,
+    -- or don't update x at all
     if self.xDir == 2 then
         self.x = self.x + self.xTraj
-    else
+        -- only update y downward
+        self.y = self.y + self.yTraj
+    elseif self.xDir == 1 then
         self.x = self.x - self.xTraj
-    end
-    
-    -- always update y downward
-    self.y = self.y + self.yTraj
+        -- only update y downward
+        self.y = self.y + self.yTraj
+    else
+        -- only update y downward
+        self.y = self.y + self.yTraj
+    end 
 end
 
 function EnemyUFO:collisions(target)

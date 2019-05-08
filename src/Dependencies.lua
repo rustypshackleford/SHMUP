@@ -16,6 +16,7 @@ require 'src/BigAsteroid'
 require 'src/SmallAsteroid'
 require 'src/EnemyShip'
 require 'src/EnemyUFO'
+require 'src/EnemyProjectile'
 
 require 'src/states/BaseState'
 require 'src/states/StartState'
@@ -40,6 +41,11 @@ gTextures = {
     ['player-left'] = love.graphics.newImage('graphics/playerLeft.png'),
     ['player-right'] = love.graphics.newImage('graphics/playerRight.png'),
     ['shield'] = love.graphics.newImage('graphics/shield.png'),
+    ['health'] = love.graphics.newImage('graphics/spriteShieldsLevel_strip4.png')
+}
+
+gFrames = {
+    ['health'] = GenerateQuads(gTextures['health'], 57, 20)
 }
 
 gFonts = {

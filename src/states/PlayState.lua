@@ -31,6 +31,9 @@ function PlayState:init()
     self.hitX = 0
     self.hitY = 0
     
+    -- used to make sure the level text is only printed briefly
+    self.printLevel = true
+
     -- for confirming explosions
     self.explosion = false
     -- I created the explosion image here for animating purposes
@@ -40,6 +43,19 @@ function PlayState:init()
     -- for confirming player's laser hits on enemies
     self.laserHitRed = false
     
+    -- table for enemy projectiles
+    self.enemyProj = {}
+    -- whether to spawn green hitmarkers
+    self.laserHitGreen = false
+
+    -- prevents damage for a short period after being hit
+    self.invuln = false
+    
+    -- decrement remaining seconds of current level by 1 every second
+    Timer.every(1, function() self.levSeconds = self.levSeconds - 1 end)
+    -- after 2 seconds, remove the level text from the screen
+    Timer.after(2, function() self.printLevel = false end)
+
     -- stop the title music and play the game music
     gSounds['title-theme']:stop()
     gSounds['game-music']:setLooping(true)
@@ -50,6 +66,10 @@ end
 function PlayState:enter(params)
   -- pass the player's info into play state
     self.player = params.player
+    self.player.score = params.score
+    self.player.health = params.health
+    self.level = params.level
+    self.levSeconds = 40 + (20 * self.level)
 end
 
 function PlayState:update(dt)
@@ -57,6 +77,22 @@ function PlayState:update(dt)
     if love.keyboard.wasPressed('escape') then
         love.event.quit()
     end
+
+    -- if levSeconds is 0 we've beaten the level
+    if self.levSeconds == 0 then
+        -- remove all currently spawned objects
+        self.asteroids = {}
+        self.ships = {}
+        self.enemyProj = {}
+        -- and re-load the play state with current info
+        gStateMachine:change('play', {
+            player = self.player, -- send a new player into the play state
+            score = self.player.score,
+            health = 4, -- only exception, heal the player to full health every time
+            level = self.level + 1
+        })
+    end
+
     
     -- update currentTime for animation, then reset it 
     -- if it's greater than its duration
@@ -73,8 +109,8 @@ function PlayState:update(dt)
     self.spawner1 = self.spawner1 + dt
     self.spawner2 = self.spawner2 + dt
     
-    -- every .8 to 1 second, spawn an asteroid
-    if self.spawner1 > math.random(0.8, 1) then
+    -- every 10-11/level second, spawn an asteroid
+    if self.spawner1 > math.random(10, 11) / self.level then
         -- small if we get 1 here
         if astPicker == 1 then
             table.insert(self.asteroids, SmallAsteroid())
@@ -86,11 +122,11 @@ function PlayState:update(dt)
     end
     
     -- same logic as above except with ships and slightly longer delays
-    if self.spawner2 > math.random(1.5, 2.5) then
+    if self.spawner2 > math.random(10.5, 12.5) / self.level then
         if shipPicker == 1 then
-            table.insert(self.ships, EnemyShip())
+            table.insert(self.ships, EnemyShip(shipPicker))
         else
-            table.insert(self.ships, EnemyUFO())
+            table.insert(self.ships, EnemyUFO(shipPicker))
         end
         --reset spawner2
         self.spawner2 = 0
@@ -105,25 +141,52 @@ function PlayState:update(dt)
         
         -- if the player collides with an asteroid (and hasn't already, to keep multiple collisions from happening)
         if asteroid:collisions(self.player) or self.player:collides(asteroid) and self.collision == false then
-            -- update the player's lives accordingly
-            if self.collision == false then
-                if self.player.lives == 3 then
-                    self.player.lives = 2
-                elseif self.player.lives == 2 then
-                    self.player.lives = 1
-                else
-                    self.player.lives = 0
+            -- update the player's health and lives accordingly
+            if self.collision == false and self.invuln == false then
+                if self.player.health == 4 then
+                    self.player.health = 3
+                    -- briefly set collision to true, which
+                    -- causes the ship to blink, to give a
+                    -- visual that the player has collided with something
+                    self.collision = true
+                    -- self.invuln prevents damage briefly so that
+                    -- damage doesn't stack or overlap incorrectly
+                    self.invuln = true
+                    -- play a sound
+                    gSounds['shld-down']:play()
+                    -- timers reset each boolean after a short delay 
+                    Timer.after(0.1, function() self.collision = false end)
+                    Timer.after(1, function() self.invuln = false end)
+                elseif self.player.health == 3 then
+                    self.player.health = 2
+                    self.collision = true 
+                    self.invuln = true 
+                    gSounds['shld-down']:play()
+                    Timer.after(0.1, function() self.collision = false end)
+                    Timer.after(1, function() self.invuln = false end)
+                elseif self.player.health == 2 then
+                    self.player.health = 1
+                    self.collision = true 
+                    self.invuln = true 
+                    gSounds['shld-down']:play()
+                    Timer.after(0.1, function() self.collision = false end)
+                    Timer.after(1, function() self.invuln = false end)
+                else -- at 1 health, blow the thing up and decrement lives
+                    if self.player.lives == 3 then
+                        self.player.lives = 2
+                        self:explode()
+                        self.player.health = 4
+                    elseif self.player.lives == 2 then
+                        self.player.lives = 1
+                        self:explode()
+                        self.player.health = 4
+                    else
+                        self.player.lives = 0
+                        self:explode()
+                        self.player.health = 0
+                    end
                 end
             end
-            self.collision = true -- set collision to true
-            self.explosion = true -- set explosion to true
-            self.player.collision = true -- set player collision to true, to stop movement while dead
-            gSounds['boom' .. tostring(math.random(9))]:play() -- play 1 of 9 random BOOM sounds
-            Timer.after(2, function() self.collision = false end) -- after 2 seconds, put collision back to false
-            self.explX = self.player.x -- get player's x for explosion
-            self.explY = self.player.y -- and player's y
-            self.player.x = VIRTUAL_WIDTH / 2 - 25 -- reset player's position
-            self.player.y = VIRTUAL_HEIGHT - 50 -- back to where you start
         end
         
         -- go through projectiles table
@@ -161,31 +224,74 @@ function PlayState:update(dt)
         asteroid:update()
     end
     
-    -- this stuff is literally the same as the asteroids logic, but with ships
+    -- this stuff is mostly the same as the asteroids logic, but with ships
     for k, ship in pairs(self.ships) do
-        if ship.y > VIRTUAL_HEIGHT then
+        if ship.y > VIRTUAL_HEIGHT or ship.x + ship.width < 0 or ship.x > VIRTUAL_WIDTH then
             table.remove(self.ships, k)
         end
-        
+
         if ship:collisions(self.player) or self.player:collides(ship) and self.collision == false then
-            if self.collision == false then
-                if self.player.lives == 3 then
-                    self.player.lives = 2
-                elseif self.player.lives == 2 then
-                    self.player.lives = 1
+            if self.collision == false and self.invuln == false then
+                if self.player.health == 4 then
+                    self.player.health = 3
+                    self.collision = true 
+                    self.invuln = true
+                    gSounds['shld-down']:play() 
+                    Timer.after(0.1, function() self.collision = false end)
+                    Timer.after(1, function() self.invuln = false end)
+                elseif self.player.health == 3 then
+                    self.player.health = 2
+                    self.collision = true 
+                    self.invuln = true 
+                    gSounds['shld-down']:play()
+                    Timer.after(0.1, function() self.collision = false end)
+                    Timer.after(1, function() self.invuln = false end)
+                elseif self.player.health == 2 then
+                    self.player.health = 1
+                    self.collision = true 
+                    self.invuln = true 
+                    gSounds['shld-down']:play()
+                    Timer.after(0.1, function() self.collision = false end)
+                    Timer.after(1, function() self.invuln = false end)
                 else
-                    self.player.lives = 0
+                    if self.player.lives == 3 then
+                        self.player.lives = 2
+                        self:explode()
+                        self.player.health = 4
+                    elseif self.player.lives == 2 then
+                        self.player.lives = 1
+                        self:explode()
+                        self.player.health = 4
+                    else
+                        self.player.lives = 0
+                        self:explode()
+                        self.player.health = 0
+                    end
                 end
             end
-            self.collision = true
-            self.explosion = true
-            self.player.collision = true
-            gSounds['boom' .. tostring(math.random(9))]:play()
-            Timer.after(2, function() self.collision = false end)
-            self.explX = self.player.x - 32
-            self.explY = self.player.y - 32
-            self.player.x = VIRTUAL_WIDTH / 2 - 25
-            self.player.y = VIRTUAL_HEIGHT - 50
+        end
+        
+        -- difference: they shoot lasers
+        if ship.ID == 1 then -- if we have a regular ship
+            -- and its shooting boolean is true (see EnemyShip.lua)
+            if ship.shooting == true then
+                -- create a green projectile in the enemyProj table,
+                -- play a sound and set shooting to false for now
+                table.insert(self.enemyProj, EnemyProjectile(ship))
+                cloneLaser = gSounds['laser2']:clone()
+                cloneLaser:play()
+                -- important to set ship.shooting to false here
+                -- to prevent excess lasers from being fired
+                ship.shooting = false
+            end
+        else -- else we have a UFO
+            -- and the shooting code is pretty much the same (see EnemyUFO.lua)
+            if  ship.shooting == true then
+                table.insert(self.enemyProj, EnemyProjectile(ship))
+                cloneLaser = gSounds['laser2']:clone()
+                cloneLaser:play()
+                ship.shooting = false
+            end
         end
         
         for k, proj in pairs(self.player.playerProj) do
@@ -209,7 +315,21 @@ function PlayState:update(dt)
                 end
             end
         end
-        ship:update()
+        ship:update(dt)
+    end
+    
+    -- make sure to update all lasers continually
+    for k, proj in pairs(self.enemyProj) do
+        if proj.y < VIRTUAL_HEIGHT then
+            proj:update()
+        end
+    end
+    
+    -- if a laser goes beyond the screen, remove it from the table
+    for k, proj in pairs(self.enemyProj) do
+        if proj.y > VIRTUAL_HEIGHT then
+            table.remove(self.enemyProj, k)
+        end
     end
     
     -- update backgroundY every frame
@@ -230,10 +350,67 @@ function PlayState:update(dt)
         end)
     end
     
+    -- collision detection for player and enemy shots
+    for k, proj in pairs(self.enemyProj) do -- go through enemyProj table
+        -- if there is a collision then
+        if self.player:collides(proj) or proj:collisions(self.player) then
+            -- similar to above, but don't flash the ship
+            -- because you can't see the green laser hit marker
+            -- if the ship does get flashed
+            if self.invuln == false then
+                if self.player.health == 4 then
+                    self.player.health = 3
+                    self.laserHitGreen = true 
+                    self.invuln = true
+                    gSounds['shld-down']:play() 
+                    Timer.after(1, function() self.invuln = false end)
+                elseif self.player.health == 3 then
+                    self.player.health = 2
+                    self.laserHitGreen = true  
+                    self.invuln = true
+                    gSounds['shld-down']:play()  
+                    Timer.after(1, function() self.invuln = false end)
+                elseif self.player.health == 2 then
+                    self.player.health = 1
+                    self.laserHitGreen = true  
+                    self.invuln = true 
+                    gSounds['shld-down']:play() 
+                    Timer.after(1, function() self.invuln = false end)
+                else
+                    if self.player.lives == 3 then
+                        self.player.lives = 2
+                        self:explode()
+                        self.player.health = 4
+                    elseif self.player.lives == 2 then
+                        self.player.lives = 1
+                        self:explode()
+                        self.player.health = 4
+                    else
+                        self.player.lives = 0
+                        self:explode()
+                        self.player.health = 0
+                    end
+                end
+            end
+        end
+    end
+    
     -- update the player sprite every frame unless the player is dead
     if self.collision == false then
         self.player:update(dt)
     end
+end
+
+function PlayState:explode()
+    self.collision = true -- set collision to true
+    self.explosion = true -- set explosion to true
+    self.player.collision = true -- set player collision to true, to stop movement while dead
+    gSounds['boom' .. tostring(math.random(9))]:play() -- play 1 of 9 random BOOM sounds
+    Timer.after(2, function() self.collision = false end) -- after 2 seconds, put collision back to false
+    self.explX = self.player.x -- get player's x for explosion
+    self.explY = self.player.y -- and player's y
+    self.player.x = VIRTUAL_WIDTH / 2 - 25 -- reset player's position
+    self.player.y = VIRTUAL_HEIGHT - 50 -- back to where you start
 end
 
 -- this function creates the explosion animation that plays when things blow up
@@ -324,15 +501,45 @@ function PlayState:render(dt)
         Timer.after(0.0625, function() self.laserHitRed = false end)
     end
     
+    -- render laser blast objects
+    if self.laserHitGreen == true then
+        love.graphics.draw(gTextures['green-hit'], self.player.x + 11.5, self.player.y - 5, 0, 0.25, 0.25)
+        -- make them disappear after 1/16th of a second
+        Timer.after(0.0625, function() self.laserHitGreen = false end)
+    end
+    
+    -- render the enemyProj shots if on-screen
+    for k, proj in pairs(self.enemyProj) do
+        if proj.y < VIRTUAL_HEIGHT then
+            proj:render()
+        end
+    end
+    
     -- print the score in the top right corner, with space for score to grow
-    -- note to self: maybe flip score and lives if possible....
     love.graphics.setColor(255, 255, 255, 255)
     love.graphics.setFont(gFonts['f-thin'])
     love.graphics.printf('Score: ' .. tostring(self.player.score), 0, 0, VIRTUAL_WIDTH - 25, 'right')
+
+    -- print the time left in the level in the top center(ish) of the screen
+    love.graphics.setColor(255, 255, 255, 255)
+    love.graphics.setFont(gFonts['f-thin'])
+    love.graphics.printf('Time left: ' .. tostring(self.levSeconds), 0, 0, VIRTUAL_WIDTH / 2 + 110, 'center')
+
+    -- print the current level for 2 sec at start of level
+    if self.printLevel == true then
+        love.graphics.setColor(255, 255, 255, 255)
+        love.graphics.setFont(gFonts['future'])
+        love.graphics.printf('Level: ' .. tostring(self.level), 0, VIRTUAL_HEIGHT / 2 - 25, VIRTUAL_WIDTH / 2 + 175, 'center') 
+    end
     
     -- render the player's lives in the top left
     for i = 1, self.player.lives do
       love.graphics.draw(gTextures['life'],
           (i - 1) * 20, 2, 0, 0.5, 0.5)
+    end
+
+    -- render the player's health below the lives
+    if self.player.health > 0 then
+        love.graphics.draw(gTextures['health'], gFrames['health'][self.player.health], 5, 20, 0, 0.5, 0.5)
     end
 end

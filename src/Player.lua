@@ -19,8 +19,9 @@ function Player:init()
     self.width = gTextures['player']:getWidth() / 4
     self.height = gTextures['player']:getHeight() / 4
     
-    -- # of lives and score
+    -- # of lives, health and score
     self.lives = 3
+    self.health = 4
     self.score = 0
     
     -- will use timer to space out shots
@@ -117,7 +118,7 @@ function Player:update(dt)
 end
 
 function Player:render()
-    -- special sprites for left and right mean
+    -- special sprites for left and right movement mean
     -- a bit more complicated rendering, but not much
     if love.keyboard.isDown('left') then
         love.graphics.draw(gTextures['player-left'], self.x, self.y, 0, 0.25, 0.25)
