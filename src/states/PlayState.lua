@@ -320,14 +320,14 @@ function PlayState:update(dt)
     
     -- make sure to update all lasers continually
     for k, proj in pairs(self.enemyProj) do
-        if proj.y < VIRTUAL_HEIGHT then
+        if proj.y <= VIRTUAL_HEIGHT then
             proj:update()
         end
     end
     
     -- if a laser goes beyond the screen, remove it from the table
     for k, proj in pairs(self.enemyProj) do
-        if proj.y > VIRTUAL_HEIGHT then
+        if proj.y >= VIRTUAL_HEIGHT then
             table.remove(self.enemyProj, k)
         end
     end
@@ -490,6 +490,25 @@ function PlayState:render(dt)
             end
         -- otherwise render projectiles normally
         elseif proj.y > 0 and self.collision == false then
+            proj:render()
+        end
+    end
+
+    -- for loop that prevents lasers from going through the player
+    -- when contact is made between them and a laser projectile
+    for k, proj in pairs(self.enemyProj) do
+        -- if we've scored a hit, then
+        if self.laserHitGreen == true then
+            -- go through projectiles and start removing them
+            for k, projectile in pairs(self.enemyProj) do
+                table.remove(self.enemyProj, k)
+                -- only render a projectile if it's above the location of the hit
+                if projectile.y < self.player.y then
+                    projectile:render()
+                end
+            end
+        -- otherwise render projectiles normally
+        elseif proj.y < VIRTUAL_HEIGHT then
             proj:render()
         end
     end
