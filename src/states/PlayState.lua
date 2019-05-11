@@ -98,13 +98,13 @@ function PlayState:update(dt)
             score = self.player.score,
             health = 4, -- only exception, heal the player to full health every time
             level = self.level + 1,
-            lifeTracker - self.lifeTracker
+            lifeTracker = self.lifeTracker
         })
     end
 
     -- added this feature after making my video, the player can gain back a life
     -- when they hit some multiple of 10000 points, if they are missing at least one life
-    if self.player.score > (10000 * self.lifeTracker) and self.player.lives < 3 then
+    if self.player.score >= (10000 * self.lifeTracker) and self.player.lives < 3 then
         self.player.lives = self.player.lives + 1
         self.lifeTracker = self.lifeTracker + 1
     end
@@ -150,7 +150,7 @@ function PlayState:update(dt)
     -- in the asteroids table, do...
     for k, asteroid in pairs(self.asteroids) do
         -- if the asteroid has gone off the screen, remove it
-        if asteroid.y > VIRTUAL_HEIGHT or asteroid.x > VIRTUAL_WIDTH or asteroid.x < 0 then
+        if asteroid.y > VIRTUAL_HEIGHT or asteroid.x > VIRTUAL_WIDTH or asteroid.x + asteroid.width < 0 then
             table.remove(self.asteroids, k)
         end
         
@@ -420,8 +420,10 @@ function PlayState:explode()
     self.collision = true -- set collision to true
     self.explosion = true -- set explosion to true
     self.player.collision = true -- set player collision to true, to stop movement while dead
+    self.invlun = true -- set invuln to true so player won't take damage while dead
     gSounds['boom' .. tostring(math.random(9))]:play() -- play 1 of 9 random BOOM sounds
-    Timer.after(2, function() self.collision = false end) -- after 2 seconds, put collision back to false
+    Timer.after(2, function() self.collision = false end)
+    Timer.after(3, function() self.invuln = false end) -- after 2 seconds, put collision back to false
     self.explX = self.player.x -- get player's x for explosion
     self.explY = self.player.y -- and player's y
     self.player.x = VIRTUAL_WIDTH / 2 - 25 -- reset player's position
