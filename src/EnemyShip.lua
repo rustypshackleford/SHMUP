@@ -9,8 +9,12 @@
 EnemyShip = Class{}
 
 function EnemyShip:init(num)
+    -- get width and height, scaled to 25% due to sprite size
+    self.width = gTextures['enemy-ship']:getWidth() / 4
+    self.height = gTextures['enemy-ship']:getHeight() / 4
+  
     -- random start position along top of screen
-    self.x = math.random(0, VIRTUAL_WIDTH)
+    self.x = math.random(0, VIRTUAL_WIDTH - self.width)
     -- spawns outside screen bounds
     self.y = -50
     
@@ -46,10 +50,6 @@ function EnemyShip:init(num)
     
     -- the interval for shooting is every half second
     Timer.every(0.75, function() self.shooting = not self.shooting  end)
-    
-    -- get width and height, scaled to 25% due to sprite size
-    self.width = gTextures['enemy-ship']:getWidth() / 4
-    self.height = gTextures['enemy-ship']:getHeight() / 4
 end
 
 function EnemyShip:update(dt)

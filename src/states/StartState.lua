@@ -32,7 +32,8 @@ function StartState:update(dt)
           player = Player(), -- send a new player into the play state
           score = 0, -- score starts at 0
           health = 4, -- player health starts at 4
-          level = 1 -- level starts at 1
+          level = 1, -- level starts at 1
+          lifeTracker = 1 -- also starts at 1 (see PlayState)
           })
     end
 end

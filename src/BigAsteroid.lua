@@ -18,20 +18,24 @@ function BigAsteroid:init()
     self.points = 100
     -- amount of shots it takes to blow up
     self.health = 3
+    
+    -- get width and height, scaled to 25% because of sprite size
+    self.width = gTextures['meteor-big']:getWidth() / 4
+    self.height = gTextures['meteor-big']:getHeight() / 4
 
     -- if picker1 is 1 then we spawn from the top
     if self.picker1 == 1 then
-        self.x = math.random(0, VIRTUAL_WIDTH)
+        self.x = math.random(0, VIRTUAL_WIDTH - self.width)
         self.y = -50
     else -- we spawn from a side
         -- left side spawn
         if self.picker2 == 1 then
             self.x = -50
-            self.y = math.random(0, VIRTUAL_HEIGHT)
+            self.y = math.random(0, VIRTUAL_HEIGHT - self.height)
         -- right side spawn
         elseif self.picker2 == 2 then
             self.x = VIRTUAL_WIDTH + 50
-            self.y = math.random(0, VIRTUAL_HEIGHT)
+            self.y = math.random(0, VIRTUAL_HEIGHT - self.height)
         end
     end
     
@@ -43,10 +47,6 @@ function BigAsteroid:init()
     self.xDir = math.random(2)
     -- whether it goes up or down
     self.yDir = math.random(2)
-    
-    -- get width and height, scaled to 25% because of sprite size
-    self.width = gTextures['meteor-big']:getWidth() / 4
-    self.height = gTextures['meteor-big']:getHeight() / 4
 end
 
 function BigAsteroid:update()

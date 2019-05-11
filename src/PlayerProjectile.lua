@@ -16,7 +16,7 @@ function PlayerProjectile:init(player)
     -- but shift them slightly to be centered
     -- and in front of the ship
     self.x = self.player.x + 11.5
-    self.y = self.player.y - 10
+    self.y = self.player.y
     
     -- get width and height scaled to 25% due to sprite size
     self.width = gTextures['laser-red']:getWidth() / 4

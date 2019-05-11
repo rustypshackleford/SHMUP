@@ -20,7 +20,7 @@ function EnemyProjectile:init(enemy)
     -- but shift them slightly to be centered
     -- and in front of the ship
     self.x = self.enemy.x + 11.5
-    self.y = self.enemy.y + 10
+    self.y = self.enemy.y + self.enemy.height
     
     -- rate of travel
     self.dy = 5

@@ -9,8 +9,12 @@
 EnemyUFO = Class{}
 
 function EnemyUFO:init(num)
+    -- get width and height at 25% scale due to sprite size
+    self.width = gTextures['enemy-ufo']:getWidth() / 4
+    self.height = gTextures['enemy-ufo']:getHeight() / 4
+    
     -- random starting position along the top
-    self.x = math.random(0, VIRTUAL_WIDTH)
+    self.x = math.random(0, VIRTUAL_WIDTH - self.width)
     -- spawns outside the screen bounds
     self.y = -50
     
@@ -24,6 +28,7 @@ function EnemyUFO:init(num)
     -- rate of travel
     self.xTraj = math.random(2)
     self.yTraj = math.random(2)
+    self.straight = math.random(2)
     
     -- makes sure the ship is always traveling in 
     -- toward the center and never out toward the edge
@@ -43,10 +48,6 @@ function EnemyUFO:init(num)
     Timer.every(1.25, function() self.shooting = not self.shooting end)
     Timer.after(0.1, function() Timer.every(1.25, function() self.shooting = not self.shooting end) end)
     Timer.after(0.2, function() Timer.every(1.25, function() self.shooting = not self.shooting end) end)
-    
-    -- get width and height at 25% scale due to sprite size
-    self.width = gTextures['enemy-ufo']:getWidth() / 4
-    self.height = gTextures['enemy-ufo']:getHeight() / 4
 end
 
 function EnemyUFO:update(dt)
