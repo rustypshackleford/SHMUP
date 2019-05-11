@@ -87,11 +87,6 @@ function PlayState:update(dt)
         self.asteroids = {}
         self.ships = {}
         self.enemyProj = {}
-        -- if player's score is above 10k times lifeTracker,
-        -- we increase lifeTracker so player does not get a free life
-        if self.player.score > (10000 * self.lifeTracker) then
-            self.lifeTracker = self.lifeTracker + 1
-        end
         -- and re-load the play state with current info
         gStateMachine:change('play', {
             player = self.player, -- send a new player into the play state
@@ -104,9 +99,13 @@ function PlayState:update(dt)
 
     -- added this feature after making my video, the player can gain back a life
     -- when they hit some multiple of 10000 points, if they are missing at least one life
-    if self.player.score >= (10000 * self.lifeTracker) and self.player.lives < 3 then
-        self.player.lives = self.player.lives + 1
-        self.lifeTracker = self.lifeTracker + 1
+    if self.player.score >= (10000 * self.lifeTracker) then
+        if self.player.lives == 3 then
+            self.lifeTracker = self.lifeTracker + 1
+        else
+            self.player.lives = self.player.lives + 1
+            self.lifeTracker = self.lifeTracker + 1
+        end
     end
     
     -- update currentTime for animation, then reset it 
