@@ -100,12 +100,11 @@ function PlayState:update(dt)
     -- added this feature after making my video, the player can gain back a life
     -- when they hit some multiple of 10000 points, if they are missing at least one life
     if self.player.score >= (10000 * self.lifeTracker) then
-        if self.player.lives == 3 then
-            self.lifeTracker = self.lifeTracker + 1
-        else
+        if self.player.lives < 3
             self.player.lives = self.player.lives + 1
-            self.lifeTracker = self.lifeTracker + 1
         end
+        
+        self.lifeTracker = self.lifeTracker + 1
     end
     
     -- update currentTime for animation, then reset it 
